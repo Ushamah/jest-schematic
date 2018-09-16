@@ -52,7 +52,6 @@ export interface JestOptions {
   overwrite?: boolean;
   appVersion: number;
   isNxWorkspace: boolean;
-  nxWorkspace: any;
 }
 
 export function getProjectInfo(tree: Tree): JestOptions {
@@ -66,8 +65,7 @@ export function getProjectInfo(tree: Tree): JestOptions {
 
   return {
     appVersion: version ? +version : 0,
-    isNxWorkspace: !!nxWorkspace,
-    nxWorkspace
+    isNxWorkspace: !!nxWorkspace
   }
 }
 
