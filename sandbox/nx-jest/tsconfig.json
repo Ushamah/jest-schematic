@@ -16,6 +16,15 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@nx-jest/lib1": [
+        "libs/lib1/src/index.ts"
+      ],
+      "@nx-jest/lib2": [
+        "libs/lib2/src/index.ts"
+      ],
+      "@nx-jest/lib3": [
+        "libs/lib3/src/index.ts"
+      ]
     }
   },
   "exclude": [

@@ -359,6 +359,90 @@
           }
         }
       }
+    },
+    "lib1": {
+      "root": "libs/lib1",
+      "sourceRoot": "libs/lib1/src",
+      "projectType": "library",
+      "prefix": "nx-jest",
+      "architect": {
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "libs/lib1/src/test.ts",
+            "tsConfig": "libs/lib1/tsconfig.spec.json",
+            "karmaConfig": "libs/lib1/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "libs/lib1/tsconfig.lib.json",
+              "libs/lib1/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "lib2": {
+      "root": "libs/lib2",
+      "sourceRoot": "libs/lib2/src",
+      "projectType": "library",
+      "prefix": "nx-jest",
+      "architect": {
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "libs/lib2/src/test.ts",
+            "tsConfig": "libs/lib2/tsconfig.spec.json",
+            "karmaConfig": "libs/lib2/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "libs/lib2/tsconfig.lib.json",
+              "libs/lib2/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "lib3": {
+      "root": "libs/lib3",
+      "sourceRoot": "libs/lib3/src",
+      "projectType": "library",
+      "prefix": "nx-jest",
+      "architect": {
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "libs/lib3/src/test.ts",
+            "tsConfig": "libs/lib3/tsconfig.spec.json",
+            "karmaConfig": "libs/lib3/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "libs/lib3/tsconfig.lib.json",
+              "libs/lib3/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
     }
   },
   "cli": {
