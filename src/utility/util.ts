@@ -4,6 +4,8 @@ import {
   parseJson,
   join,
   Path,
+  parseJsonAst,
+  JsonAstObject,
 } from '@angular-devkit/core';
 
 import {
@@ -34,6 +36,7 @@ export interface NodePackage {
 
 export enum Paths {
   AngularJson = './angular.json',
+  NxJson = './nx.json',
 }
 
 export enum Configs {
@@ -47,17 +50,25 @@ export interface JestOptions {
   project?: string;
   config?: 'file' | 'packagejson' | string;
   overwrite?: boolean;
-  __version__: number;
+  appVersion: number;
+  isNxWorkspace: boolean;
+  nxWorkspace: any;
 }
 
-export function getAngularVersion(tree: Tree): number {
+export function getProjectInfo(tree: Tree): JestOptions {
   const packageNode = getPackageJsonDependency(tree, '@angular/core');
 
   const version =
     packageNode &&
     packageNode.version.split('').find((char) => !!parseInt(char, 10));
 
-  return version ? +version : 0;
+  const nxWorkspace = readJsonFile(tree, Paths.NxJson);
+
+  return {
+    appVersion: version ? +version : 0,
+    isNxWorkspace: !!nxWorkspace,
+    nxWorkspace
+  }
 }
 
 export function getWorkspacePath(host: Tree): string {
@@ -209,10 +220,10 @@ export function getWorkspaceConfig(tree: Tree, options: JestOptions) {
   let projectName;
   let projectProps;
 
-  if (options.__version__ >= 6) {
+  if (options.appVersion >= 6) {
     projectName = options.project || workspace.defaultProject || '';
     projectProps = workspace.projects[projectName];
-  } else if (options.__version__ < 6) {
+  } else if (options.appVersion < 6) {
     projectName = (workspace as any).project.name || '';
     projectProps = (workspace as any).apps[0];
   }
@@ -230,7 +241,7 @@ export function getWorkspaceConfig(tree: Tree, options: JestOptions) {
 export function isMultiAppV5(tree: Tree, options: JestOptions) {
   const config = getWorkspaceConfig(tree, options);
 
-  return options.__version__ < 6 && (config.workspace as any).apps.length > 1;
+  return options.appVersion < 6 && (config.workspace as any).apps.length > 1;
 }
 
 /**
@@ -261,4 +272,21 @@ export function getLatestNodeVersion(packageName: string): Promise<NodePackage> 
   function buildPackage(name: string, version: string = DEFAULT_VERSION): NodePackage {
     return { name, version };
   }
+}
+
+export function readJsonFile(tree: Tree, path: string): JsonAstObject | null {
+  const buffer = tree.read(path);
+  if (buffer === null) {
+    return null;
+  }
+  const content = buffer.toString();
+
+  const json = parseJsonAst(content, JsonParseMode.Strict);
+  if (json.kind != 'object') {
+    throw new SchematicsException(
+      'Invalid json. Was expecting an object'
+    );
+  }
+
+  return json;
 }

@@ -16,7 +16,7 @@ import {
   safeFileDelete,
   addPropertyToPackageJson,
   getWorkspaceConfig,
-  getAngularVersion,
+  getProjectInfo,
   getLatestNodeVersion,
   NodePackage,
 } from '../utility/util';
@@ -31,7 +31,10 @@ import { map, concatMap } from 'rxjs/operators';
 
 export default function(options: JestOptions): Rule {
   return (tree: Tree, context: SchematicContext) => {
-    options = { ...options, __version__: getAngularVersion(tree) };
+    options = {
+      ...options,
+      ...getProjectInfo(tree)
+    };
 
     return chain([
       updateDependencies(),
@@ -93,7 +96,7 @@ function cleanAngularJson(options: JestOptions): Rule {
   return (tree: Tree, context: SchematicContext) => {
     context.logger.debug('Cleaning Angular.json file');
 
-    if (options.__version__ === 6) {
+    if (options.appVersion === 6) {
       const { projectProps, workspacePath, workspace } = getWorkspaceConfig(
         tree,
         options
@@ -105,7 +108,7 @@ function cleanAngularJson(options: JestOptions): Rule {
 
         tree.overwrite(workspacePath, JSON.stringify(workspace, null, 2) + '\n');
       }
-    } else if (options.__version__ < 6) {
+    } else if (options.appVersion < 6) {
       // TODO: clean up angular-cli.json file. different format that V6 angular.json
       console.warn(
         'Automated clean up of the angular-cli.json is currently not supported'
