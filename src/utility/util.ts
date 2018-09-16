@@ -62,22 +62,35 @@ export function getProjectInfo(tree: Tree): JestOptions {
   return {
     appVersion: version ? +version : 0,
     isNxWorkspace: !!nxWorkspace,
-    nxProps: !!nxWorkspace ? getNxProperties(tree) : null,
+    nxProps: !!nxWorkspace ? getWorkspaceProjects(tree) : null,
   };
 }
-
-function getNxProperties(tree: Tree) {
+interface WorkspaceProjectMap {
+  libs: {name: string, props: WorkspaceProject}[],
+  apps: {name: string, props: WorkspaceProject}[]
+}
+function getWorkspaceProjects(tree: Tree): WorkspaceProjectMap {
   const workspace = getWorkspace(tree);
 
   const libs = Object.entries<WorkspaceProject>(workspace.projects)
-    .filter(([_, val]) => {
-      return val.projectType === 'library';
-    })
-    .map(([key, val]) => {
-      return { name: key, root: val.root, sourceRoot: val.sourceRoot };
-    });
+    .filter(([_, val]) => val.projectType === 'library')
+    .map(mapProps());
 
-  return { libs };
+  const apps = Object.entries<WorkspaceProject>(workspace.projects)
+    .filter(([_, val]) => {
+      return val.projectType === 'application' && val.architect && !val.architect.e2e;
+    })
+    .map(mapProps());
+
+  return { libs, apps };
+
+  function mapProps(): (
+    value: [string, experimental.workspace.WorkspaceProject],
+    index: number,
+    array: [string, experimental.workspace.WorkspaceProject][]
+  ) => { name: string; props: experimental.workspace.WorkspaceProject } {
+    return ([name, props]) => ({ name, props });
+  }
 }
 
 export function getWorkspacePath(host: Tree): string {
