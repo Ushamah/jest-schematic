@@ -8,11 +8,7 @@ import {
   JsonAstObject,
 } from '@angular-devkit/core';
 
-import {
-  SchematicsException,
-  Tree,
-  SchematicContext,
-} from '@angular-devkit/schematics';
+import { SchematicsException, Tree, SchematicContext } from '@angular-devkit/schematics';
 
 import {
   readPackageJson,
@@ -28,6 +24,7 @@ import {
 } from './json-utils';
 
 import { get } from 'http';
+import { WorkspaceProject } from '@angular-devkit/core/src/workspace';
 
 export interface NodePackage {
   name: string;
@@ -52,29 +49,39 @@ export interface JestOptions {
   overwrite?: boolean;
   appVersion: number;
   isNxWorkspace: boolean;
+  nxProps: any;
 }
 
 export function getProjectInfo(tree: Tree): JestOptions {
   const packageNode = getPackageJsonDependency(tree, '@angular/core');
 
-  const version =
-    packageNode &&
-    packageNode.version.split('').find((char) => !!parseInt(char, 10));
+  const version = packageNode && packageNode.version.split('').find((char) => !!parseInt(char, 10));
 
   const nxWorkspace = readJsonFile(tree, Paths.NxJson);
 
   return {
     appVersion: version ? +version : 0,
-    isNxWorkspace: !!nxWorkspace
-  }
+    isNxWorkspace: !!nxWorkspace,
+    nxProps: !!nxWorkspace ? getNxProperties(tree) : null,
+  };
+}
+
+function getNxProperties(tree: Tree) {
+  const workspace = getWorkspace(tree);
+
+  const libs = Object.entries<WorkspaceProject>(workspace.projects)
+    .filter(([_, val]) => {
+      return val.projectType === 'library';
+    })
+    .map(([key, val]) => {
+      return { name: key, root: val.root, sourceRoot: val.sourceRoot };
+    });
+
+  return { libs };
 }
 
 export function getWorkspacePath(host: Tree): string {
-  const possibleFiles = [
-    '/angular.json',
-    '/.angular.json',
-    '/angular-cli.json',
-  ];
+  const possibleFiles = ['/angular.json', '/.angular.json', '/angular-cli.json'];
   const path = possibleFiles.filter((path) => host.exists(path))[0];
 
   return path;
@@ -101,9 +108,7 @@ export function getSourcePath(tree: Tree, options: any): String {
   const project = workspace.projects[options.project];
 
   if (project.projectType !== 'application') {
-    throw new SchematicsException(
-      `AddJest requires a project type of "application".`
-    );
+    throw new SchematicsException(`AddJest requires a project type of "application".`);
   }
 
   // const assetPath = join(project.root as Path, 'src', 'assets');
@@ -113,10 +118,7 @@ export function getSourcePath(tree: Tree, options: any): String {
 }
 
 // modified version from utility/dependencies/getPackageJsonDependency
-export function removePackageJsonDependency(
-  tree: Tree,
-  dependency: DeleteNodeDependency
-): void {
+export function removePackageJsonDependency(tree: Tree, dependency: DeleteNodeDependency): void {
   const packageJsonAst = readPackageJson(tree);
   const depsNode = findPropertyInAstObject(packageJsonAst, dependency.type);
   const recorder = tree.beginUpdate(pkgJson.Path);
@@ -129,8 +131,7 @@ export function removePackageJsonDependency(
       return pkg.includes(`"${dependency.name}"`);
     })[0];
 
-    const commaDangle =
-      fullPackageString && fullPackageString.trim().slice(-1) === ',' ? 1 : 0;
+    const commaDangle = fullPackageString && fullPackageString.trim().slice(-1) === ',' ? 1 : 0;
 
     const packageAst = depsNode.properties.find((node) => {
       return node.key.value.toLowerCase() === dependency.name.toLowerCase();
@@ -190,13 +191,7 @@ export function addPropertyToPackageJson(
         // script not found, add it
         context.logger.debug(`creating ${key} with ${value}`);
 
-        insertPropertyInAstObjectInOrder(
-          recorder,
-          pkgNode,
-          key,
-          value,
-          Configs.JsonIndentLevel
-        );
+        insertPropertyInAstObjectInOrder(recorder, pkgNode, key, value, Configs.JsonIndentLevel);
       } else {
         // script found, overwrite value
         context.logger.debug(`overwriting ${key} with ${value}`);
@@ -257,7 +252,7 @@ export function getLatestNodeVersion(packageName: string): Promise<NodePackage> 
       res.on('end', () => {
         try {
           const response = JSON.parse(rawData);
-          const version = response && response['dist-tags'] || {};
+          const version = (response && response['dist-tags']) || {};
 
           resolve(buildPackage(packageName, version.latest));
         } catch (e) {
@@ -281,9 +276,7 @@ export function readJsonFile(tree: Tree, path: string): JsonAstObject | null {
 
   const json = parseJsonAst(content, JsonParseMode.Strict);
   if (json.kind != 'object') {
-    throw new SchematicsException(
-      'Invalid json. Was expecting an object'
-    );
+    throw new SchematicsException('Invalid json. Was expecting an object');
   }
 
   return json;
