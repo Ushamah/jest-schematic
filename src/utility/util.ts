@@ -65,10 +65,12 @@ export function getProjectInfo(tree: Tree): JestOptions {
     nxProps: !!nxWorkspace ? getWorkspaceProjects(tree) : null,
   };
 }
+
 interface WorkspaceProjectMap {
   libs: {name: string, props: WorkspaceProject}[],
   apps: {name: string, props: WorkspaceProject}[]
 }
+
 function getWorkspaceProjects(tree: Tree): WorkspaceProjectMap {
   const workspace = getWorkspace(tree);
 
